@@ -12,7 +12,6 @@ class Server(DatagramProtocol):
             self.clients.add(addr)
             print("\nNew client joined",addr[1])
             print("Current list of clients: ",", ".join(str(x) for _,x in self.clients))
-
             self.transport.write("\n".join(str(x) for x in self.clients).encode(), addr)
         
         elif datagram == "end":   
