@@ -10,8 +10,16 @@ class Server(DatagramProtocol):
 
         if datagram == "ready":
             self.clients.add(addr)
-            #print(addr)
+            print("\nNew client joined",addr[1])
+            print("Current list of clients: ",", ".join(str(x) for _,x in self.clients))
+
             self.transport.write("\n".join(str(x) for x in self.clients).encode(), addr)
+        
+        elif datagram == "end":   
+            print("\nClient left",addr[1])
+            self.clients.remove(addr)
+            print("Current list of clients: ","\n".join(str(x) for _,x in self.clients))
+            
 
 if __name__ ==  '__main__' :
     reactor.listenUDP(9999, Server())
