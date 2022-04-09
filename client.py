@@ -3,6 +3,9 @@ from twisted.internet import reactor
 from random import randint
 import os
 
+connect_flag = 0
+user_flag = 0
+
 class Client(DatagramProtocol):
      def __init__ (self, host, port):
           if host == "localhost":
@@ -18,26 +21,55 @@ class Client(DatagramProtocol):
           print("Working on id:", self.id)
 
      def startProtocol(self):
+          
           self.transport.write("ready".encode("utf -8"), self.server)
+          reactor.callInThread(self.poll_connect)
+     
+
+     def poll_connect(self):
+
+          global connect_flag
+          global user_flag
+
+          while True:
+               ip = input()
+               if ip == "__users__":
+                    user_flag = 1
+                    self.transport.write("users".encode("utf -8"), self.server)
+               elif ip == "__connect__":
+                    connect_flag = 1
+                    break
+          
+          self.transport.write("users".encode("utf -8"), self.server)
 
      # def endProtocol(self):
      #      self.transport.write("end".encode("utf -8"), self.server)          
      
      def datagramReceived(self, datagram, addr):
+
+          global connect_flag
+          global user_flag
+
           # print("hi")
           datagram = datagram.decode("utf-8")      
      
-          if addr == self.server:
+          if connect_flag == 1:
+               connect_flag = 0
                print("Choose a client :")
                self.address = "127.0.0.1" , int(input("Write port: "))
                reactor.callInThread(self.send_message)
           else:
                if datagram == "__end__":
-                    print("User has ended conversation")
+                    print("User has ended the conversation")
                     reactor.stop()
                     os._exit(0)
-               print(addr, ":", datagram)
-               print("\n-->",end="")
+               
+               if user_flag == 1:
+                    user_flag = 0
+                    print("Users: ",datagram)
+               else:
+                    print(addr, ":", datagram)
+               # print("\n-->",end="")
    
      def send_message(self):
           print("-->",end="")
