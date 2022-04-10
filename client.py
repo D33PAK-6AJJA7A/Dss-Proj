@@ -20,6 +20,7 @@ class Client(DatagramProtocol):
           print("__end__ : Stops communication and closes the client")
           print("__users__ : To get a list of current online users")
           print("__connect__ : To connect to other online user")
+          print("__chats__ : To get all previous chats")
           print("Working on id:", self.id)
 
      def startProtocol(self):
@@ -27,7 +28,7 @@ class Client(DatagramProtocol):
           name = input("Name: ")
           self.name = name
           line = "ready:"+name
-          self.transport.write(line.encode("utf -8"), self.server)
+          self.transport.write(line.encode('utf -8'), self.server)
           reactor.callInThread(self.poll_connect)
      
 
@@ -40,16 +41,16 @@ class Client(DatagramProtocol):
                ip = input("Enter menu command: ")
                if ip == "__users__":
                     user_flag = 1
-                    self.transport.write("users".encode("utf -8"), self.server)
+                    self.transport.write("users".encode('utf -8'), self.server)
                elif ip == "__connect__":
                     connect_flag = 1
                     name = input("Enter name of user: ")
                     self.other_user = name
                     line = "query:"+name
-                    self.transport.write(line.encode("utf -8"), self.server)
+                    self.transport.write(line.encode('utf -8'), self.server)
                     break
           
-          self.transport.write("users".encode("utf -8"), self.server)
+          self.transport.write("users".encode('utf -8'), self.server)
 
      # def endProtocol(self):
      #      self.transport.write("end".encode("utf -8"), self.server)          
@@ -60,7 +61,7 @@ class Client(DatagramProtocol):
           global user_flag
 
           # print("hi")
-          datagram = datagram.decode("utf-8")      
+          datagram = datagram.decode('utf-8')      
      
           if connect_flag == 1:
                connect_flag = 0
