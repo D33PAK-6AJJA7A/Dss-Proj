@@ -10,7 +10,7 @@ class Server(DatagramProtocol):
         self.names = {}
 
     def datagramReceived (self, datagram, addr):
-        datagram = datagram.decode( "utf-8")
+        datagram = datagram.decode('utf-8')
 
         if datagram.startswith("ready"):
             lst = datagram.split(":")
