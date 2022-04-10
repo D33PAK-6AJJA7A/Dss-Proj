@@ -5,6 +5,7 @@ import os
 
 connect_flag = 0
 user_flag = 0
+recv_flag = 0
 
 class Client(DatagramProtocol):
      def __init__ (self, host, port):
@@ -35,6 +36,7 @@ class Client(DatagramProtocol):
 
           global connect_flag
           global user_flag
+          global recv_flag
 
           while True:
                ip = input("Enter menu command: ")
@@ -43,6 +45,7 @@ class Client(DatagramProtocol):
                     self.transport.write("users".encode("utf -8"), self.server)
                elif ip == "__connect__":
                     connect_flag = 1
+                    recv_flag = 1
                     name = input("Enter name of user: ")
                     self.other_user = name
                     line = "query:"+name
@@ -58,7 +61,8 @@ class Client(DatagramProtocol):
 
           global connect_flag
           global user_flag
-
+          global recv_flag
+          
           # print("hi")
           datagram = datagram.decode("utf-8")      
      
@@ -76,7 +80,7 @@ class Client(DatagramProtocol):
                if user_flag == 1:
                     user_flag = 0
                     print("Users: ",datagram)
-               else:
+               elif recv_flag == 1:
                     print(self.other_user, ":", datagram)
                # print("\n-->",end="")
    
