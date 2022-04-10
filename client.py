@@ -2,6 +2,7 @@ from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from random import randint
 import os
+import time
 
 connect_flag = 0
 user_flag = 0
@@ -44,6 +45,7 @@ class Client(DatagramProtocol):
                if ip == "__users__":
                     user_flag = 1
                     self.transport.write("users".encode('utf -8'), self.server)
+                    time.sleep(1)
                elif ip == "__connect__":
                     connect_flag = 1
                     recv_flag = 1
@@ -82,13 +84,21 @@ class Client(DatagramProtocol):
                     user_flag = 0
                     print("Users: ",datagram)
                elif recv_flag == 1:
-                    print(self.other_user, ":", datagram)
+                    if(datagram.startswith("|msg|")):
+                         tot = datagram.split(":")
+                         msg = tot[2]
+                         tim = tot[1]
+                         print(self.other_user, " : ", msg)
+                         file = open("text_1_1.txt", "a")
+                         #from user1837 to user28372 :::: message
+                         line = "Sent at : " + tim + ", Recieved at : " + str(time.time()) +" , msg : " + msg + " , from "+self.name+ " to " +self.other_user+"\n"
+                         file.write(line)
+                         file.close()
                # print("\n-->",end="")
    
      def send_message(self):
-          print("-->",end="")
           while True:
-               ip = input("") 
+               ip = input("--> ") 
                if(ip == "__end__"):
                     self.transport.write("end".encode('utf-8'), self.server)
                     self.transport.write("__end__".encode('utf-8'), self.address)
@@ -98,12 +108,12 @@ class Client(DatagramProtocol):
                elif(ip == "__users__"):
                     self.transport.write("users".encode('utf-8'), self.server)
                else:
-                    self.transport.write(ip.encode('utf-8'), self.address)
-                    file = open("text_1_1.txt", "a")
-                    #from user1837 to user28372 :::: message
-                    line = "from user"+self.name+ " to user" +self.other_user+ " :::: "+str(ip)+"\n"
-                    file.write(line)
-                    file.close()
+                    self.transport.write(("|msg|:"+str(time.time()) + ":" + ip).encode('utf-8'), self.address)
+                    # file = open("text_1_1.txt", "a")
+                    # #from user1837 to user28372 :::: message
+                    # line = "from user"+self.name+ " to user" +self.other_user+ " :::: "+str(ip)+"\n"
+                    # file.write(line)
+                    # file.close()
 
 if __name__ == '__main__' :
      port = randint(1025, 7000)
