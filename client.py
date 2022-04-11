@@ -75,8 +75,8 @@ class Client(DatagramProtocol):
           # print("hi")
           datagram = datagram.decode('utf-8')      
 
-          if datagram.startswith("Simm"):
-               print(datagram)
+          if datagram.startswith("Simm:"):
+               # print(datagram)
                lib = datagram.split(":")
                from_name = lib[1]
                to_port = int(lib[2])
