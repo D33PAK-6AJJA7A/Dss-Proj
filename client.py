@@ -4,6 +4,7 @@ from random import randint
 import os
 import time
 
+
 connect_flag = 0
 user_flag = 0
 recv_flag = 0
@@ -11,7 +12,7 @@ recv_flag = 0
 class Client(DatagramProtocol):
      def __init__ (self, host, port):
           if host == "localhost":
-               host = "127.0.0.1"
+               host = "127.0.0.1" 
 
           self.address = None
           self.id = host, port
@@ -23,6 +24,7 @@ class Client(DatagramProtocol):
           print("__users__ : To get a list of current online users")
           print("__connect__ : To connect to other online user")
           print("__chats__ : To get all previous chats")
+          print("__simulate__ : To sumulate random conversations")
           print("Working on id:", self.id)
 
      def startProtocol(self):
@@ -46,6 +48,11 @@ class Client(DatagramProtocol):
                     user_flag = 1
                     self.transport.write("users".encode('utf -8'), self.server)
                     time.sleep(1)
+               elif ip == "__simulate__" :
+                    users = int(input("Enter no. of users to chat : "))
+                    line = "simulate:"+str(users)
+                    self.transport.write(line.encode('utf -8'), self.server)
+
                elif ip == "__connect__":
                     connect_flag = 1
                     recv_flag = 1
@@ -65,10 +72,25 @@ class Client(DatagramProtocol):
           global connect_flag
           global user_flag
           global recv_flag
-          
           # print("hi")
           datagram = datagram.decode('utf-8')      
-     
+
+          if datagram.startswith("Simm"):
+               print(datagram)
+               lib = datagram.split(":")
+               from_name = lib[1]
+               to_port = int(lib[2])
+               ip = lib[3]
+               to_addr = "127.0.0.1", to_port
+               print("--> ", ip)
+               self.transport.write(("Simm_recv:" + from_name +":" + ip).encode('utf-8'), to_addr)
+
+          elif datagram.startswith("Simm_recv"):
+               tot = datagram.split(":")
+               msg = tot[2]
+               name = tot[1]
+               print(name, " : ", msg)
+
           if connect_flag == 1:
                connect_flag = 0
                port = int(datagram)
@@ -83,17 +105,16 @@ class Client(DatagramProtocol):
                if user_flag == 1:
                     user_flag = 0
                     print("Users: ",datagram)
-               elif recv_flag == 1:
-                    if(datagram.startswith("|msg|")):
-                         tot = datagram.split(":")
-                         msg = tot[2]
-                         tim = tot[1]
-                         print(self.other_user, " : ", msg)
-                         file = open("text_1_1.txt", "a")
-                         #from user1837 to user28372 :::: message
-                         line = "Sent at : " + tim + ", Recieved at : " + str(time.time()) +" , msg : " + msg + " , from "+self.name+ " to " +self.other_user+"\n"
-                         file.write(line)
-                         file.close()
+               elif recv_flag == 1 and datagram.startswith("|msg|") :
+                    tot = datagram.split(":")
+                    msg = tot[2]
+                    tim = tot[1]
+                    print(self.other_user, " : ", msg)
+                    file = open("text_1_1.txt", "a")
+                    #from user1837 to user28372 :::: message
+                    line = "Sent at : " + tim + ", Recieved at : " + str(time.time()) +" , msg : " + msg + " , from "+self.name+ " to " +self.other_user+"\n"
+                    file.write(line)
+                    file.close()
                # print("\n-->",end="")
    
      def send_message(self):
@@ -109,11 +130,6 @@ class Client(DatagramProtocol):
                     self.transport.write("users".encode('utf-8'), self.server)
                else:
                     self.transport.write(("|msg|:"+str(time.time()) + ":" + ip).encode('utf-8'), self.address)
-                    # file = open("text_1_1.txt", "a")
-                    # #from user1837 to user28372 :::: message
-                    # line = "from user"+self.name+ " to user" +self.other_user+ " :::: "+str(ip)+"\n"
-                    # file.write(line)
-                    # file.close()
 
 if __name__ == '__main__' :
      port = randint(1025, 7000)

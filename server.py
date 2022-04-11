@@ -1,5 +1,6 @@
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
+import random
 
 class Server(DatagramProtocol):
     def __init__(self):
@@ -7,11 +8,13 @@ class Server(DatagramProtocol):
         self.file = open("text_1_1.txt", "w+")
         self.file.write("5\n")
         self.file.close()
+        self.f1 = open("text_1_2.txt", "w+")
+        self.f1.close()
         self.names = {}
 
     def datagramReceived (self, datagram, addr):
         datagram = datagram.decode('utf-8')
-
+ 
         if datagram.startswith("ready"):
             lst = datagram.split(":")
             self.names[lst[1]] = addr[1]
@@ -29,6 +32,26 @@ class Server(DatagramProtocol):
             name = lst[1]
             port = self.names[name]
             self.transport.write(str(port).encode(), addr)
+
+        elif datagram.startswith("simulate"):
+            lst = datagram.split(":")
+            users = int(lst[1])
+            f = open("text_1_2.txt", "a")
+            f.write(str(users)+"\n")
+            for i in range(1,51):
+                sender = random.randint(0, users-1)
+                receiver = random.randint(0, users-1)
+                if(sender!=receiver):
+                    f.write( "User" + str(sender)+" | "+  "User"+ str(receiver) + " | "+ "message" + str(i) + "\n")
+                    s_addr = "127.0.0.1", self.names["User" + str(sender)]
+                    to_port = self.names["User" + str(receiver)]
+                    self.transport.write(("Simm:"+"User" + str(sender) + ":" + str(to_port) + ":message" + str(i)).encode(), s_addr)
+                else:
+                    f.write( "User" + str(sender) + " | " + "User" + str((receiver+1)%users) + " | " + "message" + str(i)+"\n")
+                    s_addr = "127.0.0.1", self.names["User" + str(sender)]
+                    to_port = self.names["User" + str((receiver+1)%users)]
+                    self.transport.write(("Simm:" +"User" + str(sender) + ":" + str(to_port) + ":message" + str(i)).encode(), s_addr)
+            f.close()
         
         elif datagram == "end":   
             print("\nClient left",addr[1])
