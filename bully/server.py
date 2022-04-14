@@ -38,9 +38,19 @@ class Server(DatagramProtocol):
             self.transport.write(str(port).encode(), addr)
 
         elif datagram.startswith("get_clients"):
-            self.transport.write(("clients_are",self.clients).encode(), addr)
+            self.transport.write(("clients_are",self.curr_coordinator,self.clients).encode(), addr)
         
-        # func to send coor                   
+        # not used for now                  
+        elif datagram.startwith("coordinator_exist"):
+            if self.curr_coordinator != None :
+                self.transport.write(("coordinator_exist:1").encode(), addr)  
+            else :
+                self.transport.write(("coordinator_exist:0").encode(), addr)  
+
+        elif datagram.startwith("change_coordinator"):
+            msg = datagram.split(":")
+            port = (int)(msg[1])
+            self.curr_coordinator = "127.0.0.1", port
 
         elif datagram.startswith("simulate"):
             lst = datagram.split(":")

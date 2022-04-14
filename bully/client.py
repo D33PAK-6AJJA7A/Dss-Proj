@@ -22,6 +22,7 @@ class Client(DatagramProtocol):
           self.server = "127.0.0.1", 9999
           self.name = ""
           self.other_user = ""
+          self.curr_coordinator = None
           self.curr_users = set()
           print("Menu commands : ")
           print("__end__ : Stops communication and closes the client.")
@@ -47,6 +48,10 @@ class Client(DatagramProtocol):
           self.transport.write(("get_clients").encode('utf -8'), self.server)
           time.sleep(2)
           
+          if self.curr_coordinator != None :
+               print("No election needed ... coordinator alive")
+               return 
+
           ports = set()
           flg = 0
           for x in self.curr_users:
@@ -60,12 +65,14 @@ class Client(DatagramProtocol):
                 self.transport.write(("wanna_be_coordinator").encode('utf -8'), to_addr)
                 time.sleep(2)
                 if vote_flag == 1:
+                    self.transport.write(("change_coordinator:",str(x)).encode('utf -8'), self.server)
                     self.transport.write(("make_coor").encode('utf -8'), to_addr)
                     flg = 1
                     break
 
           if flg == 0 :
             coordinator_flag = 1
+            self.transport.write(("change_coordinator:",str(self.address[1])).encode('utf -8'), self.server)
             print("\n You are elected as coordinator \n")
 
 
@@ -93,7 +100,6 @@ class Client(DatagramProtocol):
                     if coordinator_flag == 1 : 
                         print("You are coordinator idiot .. ")
                     else :
-                        self.transport.write(line.encode('utf -8'), self.server) # have to check for coor first
                         reactor.callInThread(self.conduct_election)
 
                elif ip == "__connect__":
@@ -135,7 +141,8 @@ class Client(DatagramProtocol):
               vote_flag = 1
           
           elif datagram[0] == "clients_are" :
-              self.curr_users = datagram[1]
+               self.curr_coordinator = datagram[1]
+               self.curr_users = datagram[2]
 
           elif datagram.startswith("Simm:"):
                # print(datagram)
@@ -178,11 +185,13 @@ class Client(DatagramProtocol):
                     file.close()
    
      def send_message(self):
+          global coordinator_flag
           while True:
                ip = input("--> ") 
                if(ip == "__end__"):
                     self.transport.write("end".encode('utf-8'), self.server)
                     self.transport.write("__end__".encode('utf-8'), self.address)
+                    coordinator_flag = 0
                     reactor.stop()
                     os._exit(0)
 
