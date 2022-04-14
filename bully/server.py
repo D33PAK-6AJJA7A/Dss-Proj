@@ -39,12 +39,8 @@ class Server(DatagramProtocol):
 
         elif datagram.startswith("get_clients"):
             self.transport.write(("clients_are",self.clients).encode(), addr)
-            # if self.curr_coordinator :
-            #     self.transport.write(("checkup:successful").encode(), addr)
-            # else :
-                # for x in self.clients:
-                #     if x[1] > addr[1]:
-                        
+        
+        # func to send coor                   
 
         elif datagram.startswith("simulate"):
             lst = datagram.split(":")
