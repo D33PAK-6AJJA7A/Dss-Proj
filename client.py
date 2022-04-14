@@ -82,7 +82,7 @@ class Client(DatagramProtocol):
                to_port = int(lib[2])
                ip = lib[3]
                to_addr = "127.0.0.1", to_port
-               print("--> ", ip)
+               print("--> ", ip, " : ", to_port)
                self.transport.write(("Simm_recv:" + from_name +":" + ip).encode('utf-8'), to_addr)
 
           elif datagram.startswith("Simm_recv"):
