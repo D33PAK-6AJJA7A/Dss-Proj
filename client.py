@@ -28,7 +28,6 @@ class Client(DatagramProtocol):
           print("Working on id:", self.id)
 
      def startProtocol(self):
-          
           name = input("Name: ")
           self.name = name
           line = "ready:"+name

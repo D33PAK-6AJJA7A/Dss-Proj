@@ -6,7 +6,7 @@ class Server(DatagramProtocol):
     def __init__(self):
         self.clients = set()
         self.file = open("text_1_1.txt", "w+")
-        self.file.write("5\n")
+        self.file.write("5\n") 
         self.file.close()
         self.f1 = open("text_1_2.txt", "w+")
         self.f1.close()

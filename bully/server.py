@@ -48,7 +48,7 @@ class Server(DatagramProtocol):
                 self.transport.write(("coordinator_exist:0").encode(), addr)  
 
         elif datagram.startwith("change_coordinator"):
-            msg = datagram.split(":")
+            msg = datagram.split(":") 
             port = (int)(msg[1])
             self.curr_coordinator = "127.0.0.1", port
 

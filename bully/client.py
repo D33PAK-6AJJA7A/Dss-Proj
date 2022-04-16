@@ -1,3 +1,4 @@
+from http import client
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from random import randint
@@ -67,12 +68,27 @@ class Client(DatagramProtocol):
                 if vote_flag == 1:
                     self.transport.write(("change_coordinator:",str(x)).encode('utf -8'), self.server)
                     self.transport.write(("make_coor").encode('utf -8'), to_addr)
+
+                    curr_name = str(next((name for name, port in self.curr_users.items() if port == x), None))
+                    for y in ports:
+                         del_addr = "127.0.0.1",y
+                         if y != x :
+                              self.transport.write(("del_coor").encode('utf -8'), del_addr)
+                         if y < x :
+                              self.transport.write(("announce_victory:" + curr_name).encode('utf -8'), del_addr)
                     flg = 1
                     break
 
           if flg == 0 :
             coordinator_flag = 1
             self.transport.write(("change_coordinator:",str(self.address[1])).encode('utf -8'), self.server)
+            for y in ports:
+               del_addr = "127.0.0.1",y
+               if y != self.id[1] :
+                    self.transport.write(("del_coor").encode('utf -8'), del_addr)
+               if y < self.id[1] :
+                    self.transport.write(("announce_victory:" + self.name).encode('utf -8'), del_addr)
+                    
             print("\n You are elected as coordinator \n")
 
 
@@ -128,17 +144,26 @@ class Client(DatagramProtocol):
               coordinator_flag = 1
               print("\n You are elected as coordinator \n")
 
+          elif datagram.startswith("del_coor"):
+              coordinator_flag = 0
+          
+          elif datagram.startswith("announce_victory") :
+               msg = datagram.split(":")
+               print(msg[1] + " is elected as new coordinator \n")
+
           elif datagram.startswith("u_alive_buddy"):
-              self.transport.write(("res_alive" + str(randint(1,101)%2)).encode('utf-8'), addr) 
+              self.transport.write(("res_alive:" + str(randint(1,101)%2)).encode('utf-8'), addr) 
 
           elif datagram.startswith("wanna_be_coordinator"):
-              self.transport.write(("res_coor" + str(randint(1,101)%2)).encode('utf-8'), addr) 
+              self.transport.write(("res_coor:" + str(randint(1,101)%2)).encode('utf-8'), addr) 
           
           elif datagram.startswith("res_alive"):
-              alive_flag = 1
+               msg = datagram.split(":")
+               alive_flag = int(msg[1])
 
           elif datagram.startswith("res_coor"):
-              vote_flag = 1
+               msg = datagram.split(":")
+               vote_flag = int(msg[1])
           
           elif datagram[0] == "clients_are" :
                self.curr_coordinator = datagram[1]
@@ -188,7 +213,7 @@ class Client(DatagramProtocol):
           global coordinator_flag
           while True:
                ip = input("--> ") 
-               if(ip == "__end__"):
+               if(ip == "__end__"): 
                     self.transport.write("end".encode('utf-8'), self.server)
                     self.transport.write("__end__".encode('utf-8'), self.address)
                     coordinator_flag = 0
