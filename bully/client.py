@@ -26,9 +26,8 @@ class Client(DatagramProtocol):
           print("__end__ : Stops communication and closes the client.")
           print("__users__ : To get a list of current online users.")
           print("__connect__ : To connect to other online user.")
-          print("__chats__ : To get all previous chats.")
           print("__simulate__ : To simulate random conversations.")
-          print("__check__ : To check up on coordinator.")
+          print("__check__ : To check up on coordinator and to conduct conduct election if neccesary.")
           print("Working on id:", self.id)
 
      # takes name of client and stores it in a set

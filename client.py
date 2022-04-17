@@ -23,7 +23,6 @@ class Client(DatagramProtocol):
           print("__end__ : Stops communication and closes the client")
           print("__users__ : To get a list of current online users")
           print("__connect__ : To connect to other online user")
-          print("__chats__ : To get all previous chats")
           print("__simulate__ : To simulate random conversations")
           print("Working on id:", self.id)
 

@@ -86,6 +86,11 @@ def file_polling():
             f = open("snap_file.pkl","wb")
             pickle.dump(line,f)
             f.close()
+    else :
+        line = {"Communication Status" : "No communication", "Sent at" : "-", "Recieved at" : "-", "msg" : "-", "from" : "-", "to" : "-"}
+        f = open("snap_file.pkl","wb")
+        pickle.dump(line,f)
+        f.close() 
 
 # server is listening on port 9999
 # call is made tofile_polling function every 2 sec
