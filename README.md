@@ -22,6 +22,6 @@ Q. What is the proper use of "***connect***" command ?
 > "***connect***" command should be executed by both the clients who want to chat with each other and enter each other’s name to chat.
 
 Q. What is the proper use of "***simulate***" command ? 
-> For working of "***simulate***" command clients with names as User0, User1, User2 so on upto (entered users - 1) should be running in order to simulate random chats  - between them.
+> For working of "__***simulate***__" command clients with names as User0, User1, User2 so on upto (entered users - 1) should be running in order to simulate random chats  - between them.
 
 
