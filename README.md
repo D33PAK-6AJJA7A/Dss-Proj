@@ -18,10 +18,10 @@ Note :
  - To view all the simulated chats open the “text_1_2.txt” file which is created in the same folder. 
 
 ## FAQ
-Q. What is the proper use of "__connect__" command ?
-A. “__connect__” command should be executed by both the clients who want to chat with each other and enter each other’s name to chat.
+Q. What is the proper use of "***connect***" command ?
+> "***connect***" command should be executed by both the clients who want to chat with each other and enter each other’s name to chat.
 
-Q. What is the proper use of "__simulate__" command ? 
- - For working of “__simulate__” command clients with names as User0, User1, User2 so on upto (entered users - 1) should be running in order to simulate random chats  - between them.
+Q. What is the proper use of "***simulate***" command ? 
+> For working of "***simulate***" command clients with names as User0, User1, User2 so on upto (entered users - 1) should be running in order to simulate random chats  - between them.
 
 
