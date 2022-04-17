@@ -38,18 +38,22 @@ class Server(DatagramProtocol):
             self.transport.write(str(port).encode(), addr)
 
         elif datagram.startswith("get_clients"):
-            self.transport.write(("clients_are",self.curr_coordinator,self.clients).encode(), addr)
-        
+            #print(("clients_are|"+str(self.curr_coordinator[1]) + "|" + ("&".join(str(x) for x in self.clients))))
+            send_port = "None"
+            if self.curr_coordinator != None: 
+                send_port = str(self.curr_coordinator[1])
+            self.transport.write(("clients_are|"+ send_port + "|" + ("&".join(str(x) for x in self.clients))).encode(), addr)
+         
         # not used for now                  
-        elif datagram.startwith("coordinator_exist"):
+        elif datagram.startswith("coordinator_exist"):
             if self.curr_coordinator != None :
                 self.transport.write(("coordinator_exist:1").encode(), addr)  
             else :
                 self.transport.write(("coordinator_exist:0").encode(), addr)  
 
-        elif datagram.startwith("change_coordinator"):
+        elif datagram.startswith("change_coordinator"):
             msg = datagram.split(":") 
-            port = (int)(msg[1])
+            port = int(msg[1])
             self.curr_coordinator = "127.0.0.1", port
 
         elif datagram.startswith("simulate"):
@@ -73,12 +77,12 @@ class Server(DatagramProtocol):
             f.close()
         
         elif datagram == "end":   
-            if addr == self.curr_coordinator :
-                self.curr_coordinator = None
             print("\nClient left",addr[1])
             self.clients.remove(addr)
             self.names = {key:val for key, val in self.names.items() if val != addr[1]}
-            print("Current list of clients: ","\n".join(str(x) for _,x in self.clients))
+            if addr == self.curr_coordinator :
+                self.curr_coordinator = None
+            print("Current list of clients: ",", ".join(str(x) for _,x in self.clients))
             print(self.names)
             
 

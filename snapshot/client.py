@@ -69,12 +69,14 @@ class Client(DatagramProtocol):
                     recv_flag = 1
                     self.transport.write(line.encode('utf -8'), self.server)
                     break
+               
+               else:
+                   print("Enter mentioned command.")
           
           self.transport.write("users".encode('utf -8'), self.server) 
      
 
      def datagramReceived(self, datagram, addr):
-
           global connect_flag
           global user_flag
           global recv_flag

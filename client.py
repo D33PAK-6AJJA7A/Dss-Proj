@@ -64,6 +64,9 @@ class Client(DatagramProtocol):
                     recv_flag = 1
                     self.transport.write(line.encode('utf -8'), self.server)
                     break
+               
+               else:
+                   print("Enter mentioned command.")
           
           self.transport.write("users".encode('utf -8'), self.server)
 

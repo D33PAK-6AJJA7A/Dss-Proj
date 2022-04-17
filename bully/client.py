@@ -55,8 +55,12 @@ class Client(DatagramProtocol):
 
           ports = set()
           flg = 0
+         # print(self.curr_users)
           for x in self.curr_users:
-              if x[1] > self.address[1]:
+          #    print(x)
+          #     print(x[1], type(x[1]))
+          #     print(self.id[1], type(self.id[1]))
+              if x[1] > self.id[1]:
                   ports.add(x[1])
           for x in ports:
               to_addr = "127.0.0.1",x
@@ -70,7 +74,7 @@ class Client(DatagramProtocol):
                     self.transport.write(("make_coor").encode('utf -8'), to_addr)
 
                     curr_name = str(next((name for name, port in self.curr_users.items() if port == x), None))
-                    for y in ports:
+                    for _,y in self.curr_users:
                          del_addr = "127.0.0.1",y
                          if y != x :
                               self.transport.write(("del_coor").encode('utf -8'), del_addr)
@@ -81,9 +85,9 @@ class Client(DatagramProtocol):
 
           if flg == 0 :
             coordinator_flag = 1
-            self.transport.write(("change_coordinator:",str(self.address[1])).encode('utf -8'), self.server)
-            for y in ports:
-               del_addr = "127.0.0.1",y
+            self.transport.write(( "change_coordinator:"+str(self.id[1]) ).encode('utf-8'), self.server)
+            for _,y in self.curr_users:
+               del_addr = "127.0.0.1",int(y)
                if y != self.id[1] :
                     self.transport.write(("del_coor").encode('utf -8'), del_addr)
                if y < self.id[1] :
@@ -113,6 +117,8 @@ class Client(DatagramProtocol):
                     self.transport.write(line.encode('utf -8'), self.server)
                
                elif ip == "__end__" :
+                   coordinator_flag = 0
+                   self.transport.write("end".encode('utf-8'), self.server)
                    reactor.stop()
                    os._exit(0)
 
@@ -130,6 +136,9 @@ class Client(DatagramProtocol):
                     recv_flag = 1
                     self.transport.write(line.encode('utf -8'), self.server)
                     break
+               
+               else:
+                   print("Enter mentioned command.")
           
           self.transport.write("users".encode('utf -8'), self.server)    
      
@@ -143,7 +152,7 @@ class Client(DatagramProtocol):
           global alive_flag
 
           datagram = datagram.decode('utf-8')      
-
+          #print(datagram)
           if datagram.startswith("make_coor"):
               coordinator_flag = 1
               print("\n You are elected as coordinator \n")
@@ -164,14 +173,29 @@ class Client(DatagramProtocol):
           elif datagram.startswith("res_alive"):
                msg = datagram.split(":")
                alive_flag = int(msg[1])
+            #   print(msg[1], "alive")
 
           elif datagram.startswith("res_coor"):
                msg = datagram.split(":")
                vote_flag = int(msg[1])
+             #  print(msg[1], "coor")
           
-          elif datagram[0] == "clients_are" :
-               self.curr_coordinator = datagram[1]
-               self.curr_users = datagram[2]
+          elif datagram.startswith("clients_are|") :
+               msg = datagram.split("|")
+               if msg[1] == "None" :
+                    self.curr_coordinator = None
+               else :
+                    self.curr_coordinator = "127.0.0.1", int(msg[1])
+               temp_set = set(msg[2].split('&')) 
+               self.curr_users = set()
+               for x in temp_set:
+                    temp_lst = x.strip('(').strip(')').split(",")
+                    t = temp_lst[0], int(temp_lst[1])
+                    self.curr_users.add(t)
+                    
+               # print(msg)
+               # print(self.curr_coordinator)
+               # print(self.curr_users)
 
           elif datagram.startswith("Simm:"):
                # print(datagram)
