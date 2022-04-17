@@ -18,10 +18,10 @@ Note :
  - To view all the simulated chats open the “text_1_2.txt” file which is created in the same folder. 
 
 ## FAQ
-Q. What is the proper use of "***connect***" command ?
-> "***connect***" command should be executed by both the clients who want to chat with each other and enter each other’s name to chat.
+Q. What is the proper use of "\_\_**connect**\_\_" command ?
+> "\_\_**connect**\_\_" command should be executed by both the clients who want to chat with each other and enter each other’s name to chat.
 
-Q. What is the proper use of "***simulate***" command ? 
-> For working of "__***simulate***__" command clients with names as User0, User1, User2 so on upto (entered users - 1) should be running in order to simulate random chats  - between them.
+Q. What is the proper use of "\_\_**simulate**\_\_" command ? 
+> For working of "\_\_**simulate**\_\_" command clients with names as User0, User1, User2 so on upto (entered users - 1) should be running in order to simulate random chats  - between them.
 
 
