@@ -52,12 +52,16 @@ class Client(DatagramProtocol):
                     line = "simulate:"+str(users)
                     self.transport.write(line.encode('utf -8'), self.server)
 
+               elif ip == "__end__" :
+                   reactor.stop()
+                   os._exit(0)
+
                elif ip == "__connect__":
-                    connect_flag = 1
-                    recv_flag = 1
                     name = input("Enter name of user: ")
                     self.other_user = name
                     line = "query:"+name
+                    connect_flag = 1
+                    recv_flag = 1
                     self.transport.write(line.encode('utf -8'), self.server)
                     break
           

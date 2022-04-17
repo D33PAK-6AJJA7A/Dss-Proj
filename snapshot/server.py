@@ -55,7 +55,8 @@ class Server(DatagramProtocol):
         elif datagram == "end":   
             print("\nClient left",addr[1])
             self.clients.remove(addr)
-            self.names.pop(self.names.keys()[list(self.names.values()).index(addr[1])])
+           # self.names.pop(self.names.keys()[list(self.names.values()).index(addr[1])])
+            self.names = {key:val for key, val in self.names.items() if val != addr[1]}
             print("Current list of clients: ","\n".join(str(x) for _,x in self.clients))
             print(self.names)
 
@@ -81,6 +82,3 @@ if __name__ ==  '__main__' :
     l = task.LoopingCall(file_polling)
     l.start(2)
     reactor.run()
-    # thread = Thread(target = file_polling, args = ())
-    # thread.start()
-    # thread.join()

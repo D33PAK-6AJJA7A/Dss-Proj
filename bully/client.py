@@ -111,6 +111,10 @@ class Client(DatagramProtocol):
                     users = int(input("Enter no. of users to chat : "))
                     line = "simulate:"+str(users)
                     self.transport.write(line.encode('utf -8'), self.server)
+               
+               elif ip == "__end__" :
+                   reactor.stop()
+                   os._exit(0)
 
                elif ip == "__check__" :
                     if coordinator_flag == 1 : 
@@ -119,11 +123,11 @@ class Client(DatagramProtocol):
                         reactor.callInThread(self.conduct_election)
 
                elif ip == "__connect__":
-                    connect_flag = 1
-                    recv_flag = 1
                     name = input("Enter name of user: ")
                     self.other_user = name
                     line = "query:"+name
+                    connect_flag = 1
+                    recv_flag = 1
                     self.transport.write(line.encode('utf -8'), self.server)
                     break
           

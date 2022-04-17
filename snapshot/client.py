@@ -57,12 +57,16 @@ class Client(DatagramProtocol):
                elif ip == "__snapshot__" :
                    reactor.callInThread(self.file_polling)
 
+               elif ip == "__end__" :
+                   reactor.stop()
+                   os._exit(0)
+
                elif ip == "__connect__":
-                    connect_flag = 1
-                    recv_flag = 1
                     name = input("Enter name of user: ")
                     self.other_user = name
                     line = "query:"+name
+                    connect_flag = 1
+                    recv_flag = 1
                     self.transport.write(line.encode('utf -8'), self.server)
                     break
           
@@ -101,6 +105,7 @@ class Client(DatagramProtocol):
           else:
                if datagram == "__end__":
                     print(self.other_user+" has ended the conversation")
+                #    reactor.callFromThread(self.poll_connect)
                     reactor.stop()
                     os._exit(0)
                
@@ -112,7 +117,7 @@ class Client(DatagramProtocol):
                     msg = tot[2]
                     tim = tot[1]
                     print(self.other_user, " : ", msg)
-                    line = {"Communication Status" : "successfully recieved", "Sent at" : tim, "Recieved at" : str(time.time()), "msg" : msg, "from" : self.name, "to" : self.other_user}
+                    line = {"Communication Status" : "successfully recieved", "Sent at" : tim, "Recieved at" : str(time.time()), "msg" : msg, "from" : self.other_user, "to" : self.name}
                     f = open("snap_file.pkl","wb")
                     pickle.dump(line,f)
                     f.close()
@@ -148,7 +153,8 @@ class Client(DatagramProtocol):
                 except EOFError:
                     break
         if last_dict != None :
-            print(last_dict + "\n")
+            print(last_dict)
+            print()
         else:
             print("No Communication yet. \n")
 
