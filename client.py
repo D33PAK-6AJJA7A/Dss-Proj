@@ -24,7 +24,7 @@ class Client(DatagramProtocol):
           print("__users__ : To get a list of current online users")
           print("__connect__ : To connect to other online user")
           print("__chats__ : To get all previous chats")
-          print("__simulate__ : To sumulate random conversations")
+          print("__simulate__ : To simulate random conversations")
           print("Working on id:", self.id)
 
      def startProtocol(self):
@@ -36,7 +36,6 @@ class Client(DatagramProtocol):
      
 
      def poll_connect(self):
-
           global connect_flag
           global user_flag
           global recv_flag
@@ -69,20 +68,15 @@ class Client(DatagramProtocol):
                    print("Enter mentioned command.")
           
           self.transport.write("users".encode('utf -8'), self.server)
-
-     # def endProtocol(self):
-     #      self.transport.write("end".encode("utf -8"), self.server)          
+        
      
      def datagramReceived(self, datagram, addr):
-
           global connect_flag
           global user_flag
           global recv_flag
-          # print("hi")
           datagram = datagram.decode('utf-8')      
 
           if datagram.startswith("Simm:"):
-               # print(datagram)
                lib = datagram.split(":")
                from_name = lib[1]
                to_port = int(lib[2])
@@ -117,7 +111,6 @@ class Client(DatagramProtocol):
                     tim = tot[1]
                     print(self.other_user, " : ", msg)
                     file = open("text_1_1.txt", "a")
-                    #from user1837 to user28372 :::: message
                     line = "Sent at : " + tim + ", Recieved at : " + str(time.time()) +" , msg : " + msg + " , from "+self.name+ " to " +self.other_user+"\n"
                     file.write(line)
                     file.close()

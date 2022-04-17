@@ -1,39 +1,37 @@
-from http import client
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from random import randint
 import os
 import time
 
-
-connect_flag = 0
-user_flag = 0
-recv_flag = 0
-coordinator_flag = 0
-alive_flag = 0
-vote_flag = 0
+connect_flag = 0      # to check if client have connected to any other online client for chatting
+user_flag = 0         # to check if client has asked for list of online clients
+recv_flag = 0         # to check if two way connection is established for chatting
+coordinator_flag = 0  # to check if client is coordinator or not
+alive_flag = 0        # to check if client is online or not
+vote_flag = 0         # to check if client wants to be coordinator or not
 
 class Client(DatagramProtocol):
      def __init__ (self, host, port):
           if host == "localhost":
                host = "127.0.0.1" 
-
-          self.address = None
-          self.id = host, port
-          self.server = "127.0.0.1", 9999
-          self.name = ""
-          self.other_user = ""
-          self.curr_coordinator = None
-          self.curr_users = set()
+          self.address = None                # address of client who has connected for chatting
+          self.id = host, port               # address of current client
+          self.server = "127.0.0.1", 9999    # address of server
+          self.name = ""                     # name of current client
+          self.other_user = ""               # name client who has connected for chatting
+          self.curr_coordinator = None       # current coordinator
+          self.curr_users = set()            # current online users
           print("Menu commands : ")
           print("__end__ : Stops communication and closes the client.")
           print("__users__ : To get a list of current online users.")
           print("__connect__ : To connect to other online user.")
           print("__chats__ : To get all previous chats.")
-          print("__simulate__ : To sumulate random conversations.")
+          print("__simulate__ : To simulate random conversations.")
           print("__check__ : To check up on coordinator.")
           print("Working on id:", self.id)
 
+     # takes name of client and stores it in a set
      def startProtocol(self):
           name = input("Name: ")
           self.name = name
@@ -41,38 +39,45 @@ class Client(DatagramProtocol):
           self.transport.write(line.encode('utf -8'), self.server)
           reactor.callInThread(self.poll_connect)
      
+     # function to conduct election when there is no coordinator
      def conduct_election(self):
           global vote_flag
           global alive_flag
           global coordinator_flag
 
+          # gets all online clients and current coordinator
           self.transport.write(("get_clients").encode('utf -8'), self.server)
           time.sleep(2)
           
+          # election not needed if coordinator is present 
           if self.curr_coordinator != None :
                print("No election needed ... coordinator alive")
                return 
 
+          # get all clients with higher priority
           ports = set()
           flg = 0
-         # print(self.curr_users)
           for x in self.curr_users:
-          #    print(x)
-          #     print(x[1], type(x[1]))
-          #     print(self.id[1], type(self.id[1]))
               if x[1] > self.id[1]:
                   ports.add(x[1])
+
+          # check all high priority clients for status
           for x in ports:
               to_addr = "127.0.0.1",x
               self.transport.write(("u_alive_buddy").encode('utf -8'), to_addr)
               time.sleep(2)
+
+              # if a high priority client is online 
               if alive_flag == 1:
                 self.transport.write(("wanna_be_coordinator").encode('utf -8'), to_addr)
                 time.sleep(2)
+
+                # if that high priority client wants to be coordinator
                 if vote_flag == 1:
                     self.transport.write(("change_coordinator:",str(x)).encode('utf -8'), self.server)
                     self.transport.write(("make_coor").encode('utf -8'), to_addr)
 
+                    # announce victory of new assigned coordinator
                     curr_name = str(next((name for name, port in self.curr_users.items() if port == x), None))
                     for _,y in self.curr_users:
                          del_addr = "127.0.0.1",y
@@ -83,6 +88,7 @@ class Client(DatagramProtocol):
                     flg = 1
                     break
 
+          # if no high priority coordinator is present, make current client as coordinator and announce victory
           if flg == 0 :
             coordinator_flag = 1
             self.transport.write(( "change_coordinator:"+str(self.id[1]) ).encode('utf-8'), self.server)
@@ -96,6 +102,7 @@ class Client(DatagramProtocol):
             print("\n You are elected as coordinator \n")
 
 
+     # function to explore all menu commands
      def poll_connect(self):
           global connect_flag
           global user_flag
@@ -142,8 +149,9 @@ class Client(DatagramProtocol):
           
           self.transport.write("users".encode('utf -8'), self.server)    
      
-     def datagramReceived(self, datagram, addr):
 
+     # all packets recieved by this client arrives at this function
+     def datagramReceived(self, datagram, addr):
           global connect_flag
           global user_flag
           global recv_flag
@@ -151,35 +159,41 @@ class Client(DatagramProtocol):
           global vote_flag
           global alive_flag
 
-          datagram = datagram.decode('utf-8')      
-          #print(datagram)
+          datagram = datagram.decode('utf-8')   
+
+          # to make current client as coordinator
           if datagram.startswith("make_coor"):
               coordinator_flag = 1
               print("\n You are elected as coordinator \n")
 
+          # to delete current client as coordinator
           elif datagram.startswith("del_coor"):
               coordinator_flag = 0
           
+          # to announce victory of elected coordinator
           elif datagram.startswith("announce_victory") :
                msg = datagram.split(":")
                print(msg[1] + " is elected as new coordinator \n")
 
+          # to check if current client is online
           elif datagram.startswith("u_alive_buddy"):
               self.transport.write(("res_alive:" + str(randint(1,101)%2)).encode('utf-8'), addr) 
 
+          # to check if current client wants to be coordinator
           elif datagram.startswith("wanna_be_coordinator"):
               self.transport.write(("res_coor:" + str(randint(1,101)%2)).encode('utf-8'), addr) 
           
+          # to respond if current client is alive
           elif datagram.startswith("res_alive"):
                msg = datagram.split(":")
                alive_flag = int(msg[1])
-            #   print(msg[1], "alive")
 
+          # to respond if current client wants to be coordinator
           elif datagram.startswith("res_coor"):
                msg = datagram.split(":")
                vote_flag = int(msg[1])
-             #  print(msg[1], "coor")
           
+          # to store online clients and current coordinator 
           elif datagram.startswith("clients_are|") :
                msg = datagram.split("|")
                if msg[1] == "None" :
@@ -192,13 +206,9 @@ class Client(DatagramProtocol):
                     temp_lst = x.strip('(').strip(')').split(",")
                     t = temp_lst[0], int(temp_lst[1])
                     self.curr_users.add(t)
-                    
-               # print(msg)
-               # print(self.curr_coordinator)
-               # print(self.curr_users)
 
+          # to send a simulated message 
           elif datagram.startswith("Simm:"):
-               # print(datagram)
                lib = datagram.split(":")
                from_name = lib[1]
                to_port = int(lib[2])
@@ -207,26 +217,32 @@ class Client(DatagramProtocol):
                print("--> ", ip, " : ", to_port)
                self.transport.write(("Simm_recv:" + from_name +":" + ip).encode('utf-8'), to_addr)
 
+          # to recieve a simulated message
           elif datagram.startswith("Simm_recv"):
                tot = datagram.split(":")
                msg = tot[2]
                name = tot[1]
                print(name, " : ", msg)
 
+          # if client is connected to other client, then client ready to send messages
           if connect_flag == 1:
                connect_flag = 0
                port = int(datagram)
                self.address = "127.0.0.1" , port
                reactor.callInThread(self.send_message)
           else:
+               # announce if connection is lost
                if datagram == "__end__":
                     print(self.other_user+" has ended the conversation")
                     reactor.stop()
                     os._exit(0)
                
+               # to recieve all online clients names
                if user_flag == 1:
                     user_flag = 0
                     print("Users: ",datagram)
+               
+               # to recieve a chat and to store it in a file
                elif recv_flag == 1 and datagram.startswith("|msg|") :
                     tot = datagram.split(":")
                     msg = tot[2]
@@ -237,10 +253,13 @@ class Client(DatagramProtocol):
                     file.write(line)
                     file.close()
    
+     # function for chatting with other clients
      def send_message(self):
           global coordinator_flag
           while True:
                ip = input("--> ") 
+
+               # to end a conversation
                if(ip == "__end__"): 
                     self.transport.write("end".encode('utf-8'), self.server)
                     self.transport.write("__end__".encode('utf-8'), self.address)
@@ -248,11 +267,15 @@ class Client(DatagramProtocol):
                     reactor.stop()
                     os._exit(0)
 
+               # to get all online users
                elif(ip == "__users__"):
                     self.transport.write("users".encode('utf-8'), self.server)
+               
+               # to send a chat to connected client
                else:
                     self.transport.write(("|msg|:"+str(time.time()) + ":" + ip).encode('utf-8'), self.address)
 
+# client is assigned a random port to communicate
 if __name__ == '__main__' :
      port = randint(1025, 7000)
      reactor.listenUDP(port, Client('localhost', port))
