@@ -19,16 +19,22 @@ class Server(DatagramProtocol):
         self.f1.close()
         self.names = {}
 
+        #for snapshots
+        f = open("snap_file.pkl","a")
+        f.close()
+
+
+
     def datagramReceived (self, datagram, addr):
         datagram = datagram.decode('utf-8')
  
         #When client sends ready message, server adds client to active clients list and conducts first election
         if datagram.startswith("ready"):
             lst = datagram.split(":")
-            self.names[lst[1]] = addr[1]
+            self.names[lst[1]] = addr
             self.clients.add(addr)
             print("\nNew client joined",addr[1])
-            print("Current list of clients: ",", ".join(str(x) for _,x in self.clients))
+            print("Current list of clients: ",", ".join(x for x in self.names.keys()))
             print(self.names)
         
         #client asking for list of current users as names
@@ -39,10 +45,11 @@ class Server(DatagramProtocol):
         elif datagram.startswith("query"):
             lst = datagram.split(":")
             name = lst[1]
-            port = self.names[name]
-            self.transport.write(str(port).encode(), addr)
+            addrr = self.names[name][0] 
+            port = self.names[name][1]
+            self.transport.write((str(addrr) + ":" + str(port)).encode(), addr)
 
-        #function to simulate chat
+        #function to simulate chat 
         elif datagram.startswith("simulate"):
             lst = datagram.split(":")
             users = int(lst[1])
@@ -53,21 +60,21 @@ class Server(DatagramProtocol):
                 receiver = random.randint(0, users-1)
                 if(sender!=receiver):
                     f.write( "User" + str(sender)+" | "+  "User"+ str(receiver) + " | "+ "message" + str(i) + "\n")
-                    s_addr = "127.0.0.1", self.names["User" + str(sender)]
+                    s_addr = self.names["User" + str(sender)]
                     to_port = self.names["User" + str(receiver)]
-                    self.transport.write(("Simm:"+"User" + str(sender) + ":" + str(to_port) + ":message" + str(i)).encode(), s_addr)
+                    self.transport.write(("Simm:"+"User" + str(sender) + ":" + str(to_port) + ":message" + str(i)+":User" + str(receiver)).encode(), s_addr)
                 else:
                     f.write( "User" + str(sender) + " | " + "User" + str((receiver+1)%users) + " | " + "message" + str(i)+"\n")
-                    s_addr = "127.0.0.1", self.names["User" + str(sender)]
+                    s_addr = self.names["User" + str(sender)]
                     to_port = self.names["User" + str((receiver+1)%users)]
-                    self.transport.write(("Simm:" +"User" + str(sender) + ":" + str(to_port) + ":message" + str(i)).encode(), s_addr)
+                    self.transport.write(("Simm:" +"User" + str(sender) + ":" + str(to_port) + ":message" + str(i)+":User" + str((receiver+1)%users)).encode(), s_addr)
             f.close()
         
         # when client leaves, it is removed from current users list
         elif datagram == "end":   
             print("\nClient left",addr[1])
             self.clients.remove(addr)
-            self.names = {key:val for key, val in self.names.items() if val != addr[1]}
+            self.names = {key:val for key, val in self.names.items() if val[1] != addr[1]}
             print("Current list of clients: ","\n".join(str(x) for _,x in self.clients))
             print(self.names)
 

@@ -4,16 +4,14 @@ from random import randint
 import os
 import time
 import pickle
+import socket
 
 connect_flag = 0      # to check if client have connected to any other online client for chatting
 user_flag = 0         # to check if client has asked for list of online clients
 recv_flag = 0         # to check if two way connection is established for chatting
 
-class Client(DatagramProtocol):
+class Client(DatagramProtocol): 
      def __init__ (self, host, port):
-          if host == "localhost":
-               host = "127.0.0.1" 
-
           self.address = None                # address of client who has connected for chatting
           self.id = host, port               # address of current client
           self.server = "127.0.0.1", 9999    # address of server
@@ -56,6 +54,7 @@ class Client(DatagramProtocol):
                    reactor.callInThread(self.file_polling)
 
                elif ip == "__end__" :
+                   self.transport.write("end".encode('utf-8'), self.server)
                    reactor.stop()
                    os._exit(0)
 
@@ -84,10 +83,11 @@ class Client(DatagramProtocol):
           if datagram.startswith("Simm:"):
                lib = datagram.split(":")
                from_name = lib[1]
-               to_port = int(lib[2])
                ip = lib[3]
-               to_addr = "127.0.0.1", to_port
-               print("--> ", ip, " : ", to_port)
+               temp_lst = lib[2].strip('(').strip(')').split(",")
+               adddd = str(temp_lst[0].strip('\'').strip('\''))
+               to_addr = adddd, int(temp_lst[1])
+               print("--> ", ip, " : ", lib[4])
                self.transport.write(("Simm_recv:" + from_name +":" + ip).encode('utf-8'), to_addr)
 
           # to recieve a simulated message
@@ -100,13 +100,16 @@ class Client(DatagramProtocol):
           # if client is connected to other client, then client ready to send messages
           if connect_flag == 1:
                connect_flag = 0
-               port = int(datagram)
-               self.address = "127.0.0.1" , port
+               msg = datagram.split(":")
+               addrr = msg[0]
+               port = int(msg[1])
+               self.address = addrr, port
                reactor.callInThread(self.send_message)
           else:
                # announce if connection is lost
                if datagram == "__end__":
                     print(self.other_user+" has ended the conversation")
+                    self.transport.write("end".encode('utf-8'), self.server)
                     reactor.stop()
                     os._exit(0)
                
@@ -172,5 +175,5 @@ class Client(DatagramProtocol):
 # client is assigned a random port to communicate
 if __name__ == '__main__' :
      port = randint(1025, 7000)
-     reactor.listenUDP(port, Client('localhost', port))
+     reactor.listenUDP(port, Client(str(socket.gethostbyname(socket.gethostname())), port))
      reactor.run()

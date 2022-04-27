@@ -3,7 +3,8 @@ from twisted.internet import reactor
 from random import randint
 import os
 import time
-
+import socket
+ 
 
 connect_flag = 0
 user_flag = 0
@@ -11,9 +12,6 @@ recv_flag = 0
 
 class Client(DatagramProtocol):
      def __init__ (self, host, port):
-          if host == "localhost":
-               host = "127.0.0.1" 
-
           self.address = None
           self.id = host, port
           self.server = "127.0.0.1", 9999
@@ -51,6 +49,7 @@ class Client(DatagramProtocol):
                     self.transport.write(line.encode('utf -8'), self.server)
 
                elif ip == "__end__" :
+                   self.transport.write("end".encode('utf-8'), self.server)
                    reactor.stop()
                    os._exit(0)
 
@@ -78,10 +77,11 @@ class Client(DatagramProtocol):
           if datagram.startswith("Simm:"):
                lib = datagram.split(":")
                from_name = lib[1]
-               to_port = int(lib[2])
                ip = lib[3]
-               to_addr = "127.0.0.1", to_port
-               print("--> ", ip, " : ", to_port)
+               temp_lst = lib[2].strip('(').strip(')').split(",")
+               adddd = str(temp_lst[0].strip('\'').strip('\''))
+               to_addr = adddd, int(temp_lst[1])
+               print("--> ", ip, " : ", lib[4])
                self.transport.write(("Simm_recv:" + from_name +":" + ip).encode('utf-8'), to_addr)
 
           elif datagram.startswith("Simm_recv"):
@@ -92,12 +92,15 @@ class Client(DatagramProtocol):
 
           if connect_flag == 1:
                connect_flag = 0
-               port = int(datagram)
-               self.address = "127.0.0.1" , port
+               msg = datagram.split(":")
+               addrr = msg[0]
+               port = int(msg[1])
+               self.address = addrr, port
                reactor.callInThread(self.send_message)
           else:
                if datagram == "__end__":
                     print(self.other_user+" has ended the conversation")
+                    self.transport.write("end".encode('utf-8'), self.server)
                     reactor.stop()
                     os._exit(0)
                
@@ -131,5 +134,5 @@ class Client(DatagramProtocol):
 
 if __name__ == '__main__' :
      port = randint(1025, 7000)
-     reactor.listenUDP(port, Client('localhost', port))
+     reactor.listenUDP(port, Client(str(socket.gethostbyname(socket.gethostname())), port))
      reactor.run()

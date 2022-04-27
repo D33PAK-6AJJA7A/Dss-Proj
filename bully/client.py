@@ -1,9 +1,10 @@
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
+import socket     
 from random import randint
 import os
 import time
-
+ 
 connect_flag = 0      # to check if client have connected to any other online client for chatting
 user_flag = 0         # to check if client has asked for list of online clients
 recv_flag = 0         # to check if two way connection is established for chatting
@@ -13,11 +14,9 @@ vote_flag = 0         # to check if client wants to be coordinator or not
 
 class Client(DatagramProtocol):
      def __init__ (self, host, port):
-          if host == "localhost":
-               host = "127.0.0.1" 
           self.address = None                # address of client who has connected for chatting
           self.id = host, port               # address of current client
-          self.server = "127.0.0.1", 9999    # address of server
+          self.server = "127.0.0.1", 9999  # address of server
           self.name = ""                     # name of current client
           self.other_user = ""               # name client who has connected for chatting
           self.curr_coordinator = None       # current coordinator
@@ -58,11 +57,11 @@ class Client(DatagramProtocol):
           flg = 0
           for x in self.curr_users:
               if x[1] > self.id[1]:
-                  ports.add(x[1])
+                  ports.add(x)
 
           # check all high priority clients for status
           for x in ports:
-              to_addr = "127.0.0.1",x
+              to_addr = x
               self.transport.write(("u_alive_buddy").encode('utf -8'), to_addr)
               time.sleep(2)
 
@@ -78,24 +77,24 @@ class Client(DatagramProtocol):
 
                     # announce victory of new assigned coordinator
                     curr_name = str(next((name for name, port in self.curr_users.items() if port == x), None))
-                    for _,y in self.curr_users:
-                         del_addr = "127.0.0.1",y
-                         if y != x :
+                    for y in self.curr_users:
+                         del_addr = y
+                         if y[1] != x[1] :
                               self.transport.write(("del_coor").encode('utf -8'), del_addr)
-                         if y < x :
+                         if y[1] < x[1] :
                               self.transport.write(("announce_victory:" + curr_name).encode('utf -8'), del_addr)
                     flg = 1
                     break
-
+ 
           # if no high priority coordinator is present, make current client as coordinator and announce victory
           if flg == 0 :
             coordinator_flag = 1
-            self.transport.write(( "change_coordinator:"+str(self.id[1]) ).encode('utf-8'), self.server)
-            for _,y in self.curr_users:
-               del_addr = "127.0.0.1",int(y)
-               if y != self.id[1] :
+            self.transport.write(( "change_coordinator:"+str(self.id) ).encode('utf-8'), self.server)
+            for y in self.curr_users:
+               del_addr = y
+               if y[1] != self.id[1] :
                     self.transport.write(("del_coor").encode('utf -8'), del_addr)
-               if y < self.id[1] :
+               if y[1] < self.id[1] :
                     self.transport.write(("announce_victory:" + self.name).encode('utf -8'), del_addr)
                     
             print("\n You are elected as coordinator \n")
@@ -198,22 +197,26 @@ class Client(DatagramProtocol):
                if msg[1] == "None" :
                     self.curr_coordinator = None
                else :
-                    self.curr_coordinator = "127.0.0.1", int(msg[1])
+                    temp_lst = msg[1].strip('(').strip(')').split(",")
+                    adddd = str(temp_lst[0].strip('\'').strip('\''))
+                    self.curr_coordinator = adddd, int(temp_lst[1])
                temp_set = set(msg[2].split('&')) 
                self.curr_users = set()
                for x in temp_set:
                     temp_lst = x.strip('(').strip(')').split(",")
-                    t = temp_lst[0], int(temp_lst[1])
+                    adddd = str(temp_lst[0].strip('\'').strip('\''))
+                    t = adddd, int(temp_lst[1])
                     self.curr_users.add(t)
 
           # to send a simulated message 
           elif datagram.startswith("Simm:"):
                lib = datagram.split(":")
                from_name = lib[1]
-               to_port = int(lib[2])
                ip = lib[3]
-               to_addr = "127.0.0.1", to_port
-               print("--> ", ip, " : ", to_port)
+               temp_lst = lib[2].strip('(').strip(')').split(",")
+               adddd = str(temp_lst[0].strip('\'').strip('\''))
+               to_addr = adddd, int(temp_lst[1])
+               print("--> ", ip, " : ", lib[4])
                self.transport.write(("Simm_recv:" + from_name +":" + ip).encode('utf-8'), to_addr)
 
           # to recieve a simulated message
@@ -226,13 +229,16 @@ class Client(DatagramProtocol):
           # if client is connected to other client, then client ready to send messages
           if connect_flag == 1:
                connect_flag = 0
-               port = int(datagram)
-               self.address = "127.0.0.1" , port
+               msg = datagram.split(":")
+               addrr = msg[0]
+               port = int(msg[1])
+               self.address = addrr, port
                reactor.callInThread(self.send_message)
           else:
                # announce if connection is lost
                if datagram == "__end__":
                     print(self.other_user+" has ended the conversation")
+                    self.transport.write("end".encode('utf-8'), self.server)
                     reactor.stop()
                     os._exit(0)
                
@@ -277,5 +283,5 @@ class Client(DatagramProtocol):
 # client is assigned a random port to communicate
 if __name__ == '__main__' :
      port = randint(1025, 7000)
-     reactor.listenUDP(port, Client('localhost', port))
+     reactor.listenUDP(port, Client(str(socket.gethostbyname(socket.gethostname())), port))
      reactor.run()
